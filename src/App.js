@@ -1,24 +1,20 @@
 import React, {useState, useEffect} from 'react'
 import './App.css';
 import Plot from 'react-plotly.js';
-import {formatDate, stockRoute, simpleGet} from "./utils";
+import {stockViewOptions, formatDate, route, simpleGet} from "./utils";
 //TODO api calls pipeline
 //TODO seamless util mapping functions ==> consumable prop obj
 //TODO special Wrapper around <Plot/> for our obj struct
 //TODO flexbox wrap multiple plots
 //TODO for 1d and lists, use own Datetime format. Rest is "2018-10-29"
 
-
-const defaultStock = 'aapl'
-
-
-const cases = {
+/*const cases = {
     today: ['1d'],
     resolutions: ['1m', '3m', '6m', '1y', '2y', '5y'],
     lists: ['mostactive']
-}
+}*/
 
-const ToolBar = ({handleSelect, options = [...cases.today, ...cases.resolutions, ...cases.lists]}) => (<>
+const ToolBar = ({handleSelect, options}) => (<>
     {options.map(option => <button onClick={() => handleSelect(option)}>{option}</button>)}
 </>)
 
@@ -27,9 +23,9 @@ const FetchStocks = ({stock, viewOption, render}) => {
     const [stockData, setStockData] = useState([{}])
     const [requestError, setRequestError] = useState(null)
 
-    const handleChange = (pick = stock, view = viewOption) => {
+    const handleChange = (stock, viewOption) => {
         setRequestError(null)
-        simpleGet(stockRoute(pick, view))
+        simpleGet(route(stock, viewOption))
             .then(stockData => setStockData(JSON.parse(stockData)))
             .catch(err => {
                 console.log('ERROR');
@@ -38,6 +34,7 @@ const FetchStocks = ({stock, viewOption, render}) => {
     }
 
     useEffect(() => {
+        console.log('ran on stock change', stock)
         handleChange(stock, viewOption)
     }, [stock, viewOption])
     //[stock] is dependent value => rerender if changed
@@ -50,7 +47,7 @@ const FetchStocks = ({stock, viewOption, render}) => {
 //TODO Yup or Superstruct simple object validation
 const equalizeAPIData = (iexData) => {
     return iexData.map(d => ({
-        date: d.minute ? new Date(formatDate(d.minute)) : new Date(),
+        date: d.minute ? new Date(formatDate(d.minute)) : d.date,
         high: d.high,
         open: d.open,
         close: d.close,
@@ -74,7 +71,7 @@ const equalizeAPIData = (iexData) => {
 
 }*/
 
-export default function App({defaultStock = defaultStock}) {
+export default function App({defaultStock = 'aapl'}) {
     const [viewOption, setViewOption] = useState('1d')
     const [stock, setStock] = useState(defaultStock)
     const [temp, setTemp] = useState('')
@@ -95,9 +92,10 @@ export default function App({defaultStock = defaultStock}) {
         return Object.assign(trace, params)
 
     }
+    let trace = {};
     return (
         <div>
-            <ToolBar handleSelect={setViewOption}/>
+            <ToolBar handleSelect={setViewOption} options={stockViewOptions}/>
             <input placeholder={'stock name'} onChange={(ev) => setTemp(ev.target.value)}/>
             <button onClick={() => setStock(temp)}>Find Stock</button>
 
@@ -107,13 +105,17 @@ export default function App({defaultStock = defaultStock}) {
                     {error && <section>{`Stock doesn't exists: ${error}`}</section>}
                     {/*TODO performance && caching*/}
                     <Plot
-                        data={[mapToTrace(apiData, {type: 'candlestick'})]}
+                        data={[Object.assign(mapToTrace(apiData), {type: 'candlestick'}),
+                            // {type: 'bar', x: [mapToTrace(apiData).x], y: [mapToTrace(apiData).average]},
+                        ]
+                        }
                         layout={{
                             width: window.innerWidth * 0.8,
                             height: window.innerHeight * 0.8,
-                            title: 'A Fancy Plot'
+                            title: viewOption + " " + stock
                         }}
                     />
+
                 </>
             )}/>
 
