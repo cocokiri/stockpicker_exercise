@@ -3,6 +3,8 @@ const apiBase = 'https://api.iextrading.com/1.0/';
 export const listOptions = ['losers', 'gainers', 'iexpercent', 'mostactive', 'iexvolume', 'iexfocus']
 export const stockViewOptions = ['1d', '1m', '3m', '6m', '1y', '2y', '5y'];
 
+
+//TODO split up
 export const route = (stock = 'aapl', view = '1d') => (
     listOptions.includes(view)
         ? apiBase + `stock/market/list/${view}`

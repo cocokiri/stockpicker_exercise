@@ -6,10 +6,6 @@ import ToolBar from './components/ToolBar'
 import Plotter from './components/Plotter'
 
 
-const ErrorCase = ({error}) => (
-    <section style={{color: "red", fontWeight: 'bold'}}>{error && `Stock doesn't exists or List was empty: ${error}`}</section>)
-
-
 export default function App({defaultStock = 'aapl'}) {
     const [viewOption, setViewOption] = useState('1d')
     const [stock, setStock] = useState(defaultStock)
@@ -20,6 +16,7 @@ export default function App({defaultStock = 'aapl'}) {
         <div className={'column-flex'}>
             <ToolBar handleSelect={setList} options={listOptions} preSelected={list}/>
             <ToolBar handleSelect={setViewOption} options={stockViewOptions} preSelected={viewOption}/>
+
             <FetchStocks viewOption={list} render={(topStocks, error = null) => (
                 <>
                     <ErrorCase error={error || !topStocks.length ? "List empty" : null}/>
@@ -29,6 +26,7 @@ export default function App({defaultStock = 'aapl'}) {
                 </>
 
             )}/>
+
             <div>
                 <input placeholder={'stock name'} onChange={(ev) => setTemp(ev.target.value)}/>
                 <button onClick={() => setStock(temp)}>Find Stock</button>
@@ -46,3 +44,10 @@ export default function App({defaultStock = 'aapl'}) {
         </div>
     );
 }
+
+const ErrorCase = ({error}) => (
+    <section style={{
+        color: "red",
+        fontWeight: 'bold'
+    }}>{error && `Stock doesn't exists or List was empty: ${error}`}</section>)
+
