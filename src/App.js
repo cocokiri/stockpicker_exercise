@@ -4,7 +4,7 @@ import Plot from 'react-plotly.js';
 import {stockViewOptions, listsViewOptions, formatDate, route, simpleGet} from "./utils";
 
 const ToolBar = ({handleSelect, options}) => {
-    const style ={
+    const style = {
         selected: {
             background: "cyan",
             color: "white",
@@ -15,10 +15,10 @@ const ToolBar = ({handleSelect, options}) => {
 
     return (<div>
         {options
-            .map(option => <button style={selected===option ? style.selected : null} onClick={() => {
-            setSelected(option)
-            handleSelect(option)
-        }}>{option}</button>)}
+            .map(option => <button style={selected === option ? style.selected : null} onClick={() => {
+                setSelected(option)
+                handleSelect(option)
+            }}>{option}</button>)}
     </div>)
 }
 
@@ -80,7 +80,8 @@ const Plotter = ({data}) => {
     const [trace, setTrace] = useState('')
 }
 
-const ErrorCase = ({error}) => (error ? <section style={{color: "red", fontWeight:'bold'}}>{`Stock doesn't exists: ${error}`}</section> : <> </>)
+const ErrorCase = ({error}) => (error ?
+    <section style={{color: "red", fontWeight: 'bold'}}>{`Stock doesn't exists: ${error}`}</section> : <> </>)
 
 export default function App({defaultStock = 'aapl'}) {
     const [viewOption, setViewOption] = useState('1d')
@@ -90,6 +91,7 @@ export default function App({defaultStock = 'aapl'}) {
 
 
     const mapToTrace = (data, params = {}) => {
+        console.log(data, 'data')
         const info = uniformApiData(data)
         let trace = {}
         for (let key in info[0]) {
@@ -101,7 +103,7 @@ export default function App({defaultStock = 'aapl'}) {
         }
         trace.x = trace.date;
         console.log(trace)
-        return Object.assign(trace, params)
+        return {...trace, ...params }
 
     }
     return (
@@ -113,24 +115,28 @@ export default function App({defaultStock = 'aapl'}) {
                     <ErrorCase error={error}/>
                     <ToolBar handleSelect={setStock} options={topStocks.map(stock => stock.symbol)}/>
                 </>
+
             )}/>
-
-
-            <input placeholder={'stock name'} onChange={(ev) => setTemp(ev.target.value)}/>
-            <button onClick={() => setStock(temp)}>Find Stock</button>
+            <div>
+                <input placeholder={'stock name'} onChange={(ev) => setTemp(ev.target.value)}/>
+                <button onClick={() => setStock(temp)}>Find Stock</button>
+            </div>
 
             <FetchStocks stock={stock} viewOption={viewOption} render={(apiData, error = null) => (
                 <>
                     <ErrorCase error={error}/>
                     {/*TODO performance && caching*/}
                     <Plot
-                        data={[Object.assign(mapToTrace(apiData), {type: 'candlestick'}),
-                            // {type: 'bar', x: [mapToTrace(apiData).x], y: [mapToTrace(apiData).average]},
-                        ]
-                        }
+                        data={[{...mapToTrace(apiData.slice()), ...{type: 'candlestick'}}]}
                         layout={{
-                            width: window.innerWidth * 0.8,
-                            height: window.innerHeight * 0.8,
+                            height: 0.8 * window.innerHeight,
+                            title: viewOption + " " + stock
+                        }}
+                    />
+                    <Plot
+                        data={[{type: 'bar', x: [mapToTrace(apiData.slice()).x], y: [mapToTrace(apiData).volume]}]}
+                        layout={{
+                            height: 0.8 * window.innerHeight,
                             title: viewOption + " " + stock
                         }}
                     />
