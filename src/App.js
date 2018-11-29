@@ -36,7 +36,6 @@ const FetchStocks = ({stock, viewOption, render}) => {
                 setRequestError(err)
             })
     }
-
     useEffect(() => {
         console.log('ran on stock change', stock)
         handleChange(stock, viewOption)
@@ -63,32 +62,13 @@ const uniformApiData = (iexData) => {
     }))
 }
 
-/*const MakeTrace = ({apiData}) => {
-    const [trace, setTrace] = useState({})
 
-    const info = equalizeAPIData(apiData)
-    for (key in info[0]) {
-        trace[key] = info.map(d => d[key])
-    }
-    trace.x = trace.date;
-    console.log(trace)
-    return Object.assign(trace, params)
-}*/
+const Plotter = ({data, title}) => {
+    const [trace, setTrace] = useState([{}])
 
-
-const Plotter = ({data}) => {
-    const [trace, setTrace] = useState('')
-}
-
-const ErrorCase = ({error}) => (error ?
-    <section style={{color: "red", fontWeight: 'bold'}}>{`Stock doesn't exists: ${error}`}</section> : <> </>)
-
-export default function App({defaultStock = 'aapl'}) {
-    const [viewOption, setViewOption] = useState('1d')
-    const [stock, setStock] = useState(defaultStock)
-    const [temp, setTemp] = useState('')
-    const [list, setList] = useState(listsViewOptions[0])
-
+    useEffect(() => {
+        mapToTrace(data)
+    }, [data])
 
     const mapToTrace = (data, params = {}) => {
         console.log(data, 'data')
@@ -102,10 +82,40 @@ export default function App({defaultStock = 'aapl'}) {
             })
         }
         trace.x = trace.date;
-        console.log(trace)
-        return {...trace, ...params }
-
+        setTrace({...trace, ...params})
     }
+/*
+    let relativeVolToPrice;
+    if (trace.volume > 1) {
+        const maxVol = Math.max(...trace.volume)
+        const maxPrice = Math.max(...trace.high)
+        relativeVolToPrice = trace.volume.map(v => v * maxVol).map(relVol => relVol * maxPrice);
+        console.log('relative Vol')
+    }*/
+    return (
+        <Plot
+            data={[{...trace, ...{type: 'candlestick', name: 'prices'}},
+                {type: 'bar', x: trace.x, y: trace.volume, name: 'volume'}
+            ]}
+            layout={{
+                height: 0.8 * window.innerHeight,
+                title
+            }}
+        />
+    )
+}
+
+const ErrorCase = ({error}) => (error ?
+    <section style={{color: "red", fontWeight: 'bold'}}>{`Stock doesn't exists: ${error}`}</section> : <> </>)
+
+
+export default function App({defaultStock = 'aapl'}) {
+    const [viewOption, setViewOption] = useState('1d')
+    const [stock, setStock] = useState(defaultStock)
+    const [temp, setTemp] = useState('')
+    const [list, setList] = useState(listsViewOptions[0])
+
+
     return (
         <div className={'column-flex'}>
             <ToolBar handleSelect={setList} options={listsViewOptions}/>
@@ -124,23 +134,10 @@ export default function App({defaultStock = 'aapl'}) {
 
             <FetchStocks stock={stock} viewOption={viewOption} render={(apiData, error = null) => (
                 <>
+                    {console.log(apiData, 'apiData')}
                     <ErrorCase error={error}/>
                     {/*TODO performance && caching*/}
-                    <Plot
-                        data={[{...mapToTrace(apiData.slice()), ...{type: 'candlestick'}}]}
-                        layout={{
-                            height: 0.8 * window.innerHeight,
-                            title: viewOption + " " + stock
-                        }}
-                    />
-                    <Plot
-                        data={[{type: 'bar', x: [mapToTrace(apiData.slice()).x], y: [mapToTrace(apiData).volume]}]}
-                        layout={{
-                            height: 0.8 * window.innerHeight,
-                            title: viewOption + " " + stock
-                        }}
-                    />
-
+                    <Plotter data={uniformApiData(apiData)} title={viewOption + " " + stock}/>
                 </>
             )}/>
 
