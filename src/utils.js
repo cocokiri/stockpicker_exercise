@@ -1,14 +1,13 @@
 const apiBase = 'https://api.iextrading.com/1.0/';
-const list = 'mostactive'
 
+export const listsViewOptions = ['mostactive', 'losers', 'gainers']
+export const stockViewOptions = ['1d', '1m', '3m', '6m', '1y', '2y', '5y'];
 
 export const route = (stock = 'aapl', view = '1d') => (
-    view === list
-        ? apiBase + `stock/market/list/${list}`
+    listsViewOptions.includes(view)
+        ? apiBase + `stock/market/list/${view}`
         : apiBase + `stock/${stock}/chart/${view}`
 )
-
-export const stockViewOptions = ['1d', '1m', '3m', '6m', '1y', '2y', '5y', list];
 
 /*
 const minuteStringToDateTime = (atMinute) => {

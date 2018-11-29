@@ -1,22 +1,26 @@
 import React, {useState, useEffect} from 'react'
 import './App.css';
 import Plot from 'react-plotly.js';
-import {stockViewOptions, formatDate, route, simpleGet} from "./utils";
-//TODO api calls pipeline
-//TODO seamless util mapping functions ==> consumable prop obj
-//TODO special Wrapper around <Plot/> for our obj struct
-//TODO flexbox wrap multiple plots
-//TODO for 1d and lists, use own Datetime format. Rest is "2018-10-29"
+import {stockViewOptions, listsViewOptions, formatDate, route, simpleGet} from "./utils";
 
-/*const cases = {
-    today: ['1d'],
-    resolutions: ['1m', '3m', '6m', '1y', '2y', '5y'],
-    lists: ['mostactive']
-}*/
+const ToolBar = ({handleSelect, options}) => {
+    const style ={
+        selected: {
+            background: "cyan",
+            color: "white",
+            fontWeight: "bold"
+        }
+    }
+    const [selected, setSelected] = useState(null)
 
-const ToolBar = ({handleSelect, options}) => (<>
-    {options.map(option => <button onClick={() => handleSelect(option)}>{option}</button>)}
-</>)
+    return (<div>
+        {options
+            .map(option => <button style={selected===option ? style.selected : null} onClick={() => {
+            setSelected(option)
+            handleSelect(option)
+        }}>{option}</button>)}
+    </div>)
+}
 
 //trying something new here.
 const FetchStocks = ({stock, viewOption, render}) => {
@@ -45,7 +49,8 @@ const FetchStocks = ({stock, viewOption, render}) => {
 
 
 //TODO Yup or Superstruct simple object validation
-const equalizeAPIData = (iexData) => {
+//I don't like this:
+const uniformApiData = (iexData) => {
     return iexData.map(d => ({
         date: d.minute ? new Date(formatDate(d.minute)) : d.date,
         high: d.high,
@@ -68,17 +73,24 @@ const equalizeAPIData = (iexData) => {
     trace.x = trace.date;
     console.log(trace)
     return Object.assign(trace, params)
-
 }*/
+
+
+const Plotter = ({data}) => {
+    const [trace, setTrace] = useState('')
+}
+
+const ErrorCase = ({error}) => (error ? <section style={{color: "red", fontWeight:'bold'}}>{`Stock doesn't exists: ${error}`}</section> : <> </>)
 
 export default function App({defaultStock = 'aapl'}) {
     const [viewOption, setViewOption] = useState('1d')
     const [stock, setStock] = useState(defaultStock)
     const [temp, setTemp] = useState('')
+    const [list, setList] = useState(listsViewOptions[0])
 
 
-    const mapToTrace = (apiData, params = {}) => {
-        const info = equalizeAPIData(apiData)
+    const mapToTrace = (data, params = {}) => {
+        const info = uniformApiData(data)
         let trace = {}
         for (let key in info[0]) {
 
@@ -92,17 +104,24 @@ export default function App({defaultStock = 'aapl'}) {
         return Object.assign(trace, params)
 
     }
-    let trace = {};
     return (
-        <div>
+        <div className={'column-flex'}>
+            <ToolBar handleSelect={setList} options={listsViewOptions}/>
             <ToolBar handleSelect={setViewOption} options={stockViewOptions}/>
+            <FetchStocks viewOption={list} render={(topStocks, error) => (
+                <>
+                    <ErrorCase error={error}/>
+                    <ToolBar handleSelect={setStock} options={topStocks.map(stock => stock.symbol)}/>
+                </>
+            )}/>
+
+
             <input placeholder={'stock name'} onChange={(ev) => setTemp(ev.target.value)}/>
             <button onClick={() => setStock(temp)}>Find Stock</button>
 
-            <FetchStocks stock={stock} viewOption={viewOption} render={(apiData, error) => (
+            <FetchStocks stock={stock} viewOption={viewOption} render={(apiData, error = null) => (
                 <>
-                    {console.log('rerender fetch', apiData[0], stock)}
-                    {error && <section>{`Stock doesn't exists: ${error}`}</section>}
+                    <ErrorCase error={error}/>
                     {/*TODO performance && caching*/}
                     <Plot
                         data={[Object.assign(mapToTrace(apiData), {type: 'candlestick'}),
@@ -122,6 +141,3 @@ export default function App({defaultStock = 'aapl'}) {
         </div>
     );
 }
-/*
-[mapToTrace(apiData, {type: 'candlestick', xaxis: 'x',
-    yaxis: 'y'})]}*/

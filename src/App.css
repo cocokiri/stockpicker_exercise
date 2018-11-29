@@ -18,6 +18,24 @@
   color: white;
 }
 
+.column-flex {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+button {
+  background: yellow;
+  font-weight: bold;
+  margin: 0.2rem;
+  font-size: 1rem;
+}
+
+input {
+  height: 2em;
+  padding:2em;
+}
+
 .App-link {
   color: #61dafb;
 }
